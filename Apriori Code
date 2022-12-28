@@ -1,0 +1,97 @@
+"""
+Created on Mon Sep 19 19:37:36 2022
+
+@author:  T. Anderson
+Apiroi test
+"""
+
+!pip install apyori
+from apyori import apriori
+# Visualization libraries
+import seaborn as sns
+
+# Import libraries
+import pandas as pd
+import random
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+from sklearn.preprocessing import KBinsDiscretizer
+import mlxtend
+from mlxtend.preprocessing import TransactionEncoder
+from mlxtend.frequent_patterns import association_rules
+
+##C:\Users\trace\Documents\1-western governors university Data Analytics MBA\Capstone Information\Task 2\cardio_train.csv
+df = pd.read_csv('C:/Users/trace/Documents/1-western governors university Data Analytics MBA/Capstone Information/Task 2/cardio_train2/cardio_train_clean.csv', sep = ';')
+
+df.head()
+df.info()
+
+df.columns
+df.shape
+
+df.describe()
+df.dtypes
+
+# Using groupby() and count() to find out how many of cardiac vs non-cardiac pateint there are
+df2 = df.groupby(['cardio'])['cardio'].count()
+print(df2)
+
+df3 = df.query("cardio == 0")
+df3.to_csv (('C:/Users/trace/Documents/1-western governors university Data Analytics MBA/Capstone Information/Task 2/cardio_train/cardio_train_onlycardio.csv'))
+df3.shape
+
+##import DRG
+#initialize list
+df = pd.read_csv('C:/Users/trace/Documents/1-western governors university Data Analytics MBA/Capstone Information/Task 2/cardio_train/cardio_train_onlycardio.csv')
+drg = pd.read_excel('C:/Users/trace/Documents/1-western governors university Data Analytics MBA/Capstone Information/Task 2/Cardiac DRG.xlsx', sheet_name=0, index_col=0)
+list_A = drg['DRG'].tolist()
+##print(list_A)
+df['drg_id'] = random.choices(list_A, k=len(df.index))
+df.to_csv (('C:/Users/trace/Documents/1-western governors university Data Analytics MBA/Capstone Information/Task 2/cardio_train/cardio_train_drgadded_test1.csv'))
+##df.shape
+
+## the file is already set up 
+##Convert to a list of lists
+df = pd.read_csv('C:/Users/trace/Documents/1-western governors university Data Analytics MBA/Capstone Information/Task 2/cardio_train/cardio_train_drgadded_10sclean.csv')
+
+df.head
+## Do not need to encode as it is 0 and 1's already
+##transactions = []
+##for i in range(0, 35002):
+   ## transactions.append([str(df.values[i, j]) for j in range(0, 7)])
+    
+    ## Use enconder
+    ##transactions = df
+  ##  te = TransactionEncoder()
+  ##  te_ary = te.fit(transactions).transform(transactions)
+  ##  df = pd.DataFrame(te_ary, columns=te.columns_)
+  ##  df
+##df.to_csv('C:/Users/trace/Documents/1-western governors university Data Analytics MBA/Capstone Information/Task 2/cardio_train/cardio_train_drgadded_10sclean.csv')    
+    
+##################################
+##Training
+df = pd.read_csv('C:/Users/trace/Documents/1-western governors university Data Analytics MBA/Capstone Information/Task 2/cardio_train/cardio_train_drgadded_10sclean.csv')
+df.head
+rules = apriori(df, min_support = 0.003, min_confidence = 0.2, min_lift = 3, min_length = 2)
+##rules = apriori(df1, min_support = 0.003, min_confidence = 0.2, min_lift = 3, min_length = 2)                
+
+# Display the output of the apriori function
+results = list(rules)
+print(len(results))
+print(results)
+
+## DataFrame the results
+def inspect(results):
+    lhs = [tuple(result[2][0][0])[0] for result in results]
+    rhs = [tuple(result[2][0][1])[0] for result in results]
+    supports = [result[1] for result in results]
+    confidence = [result[2][0][2] for result in results]
+    lifts = [result[2][0][3] for result in results]
+    return list(zip(lhs, rhs, supports, confidence, lifts))
+resultsinDataFrame = pd.DataFrame(inspect(results), columns = ['Left-hand Side', 'Right-hand Side', 'Support', 'Confidence', 'Lift'])
+
+
+
+# Show the results by lift 
+resultsinDataFrame.nlargest(n = 10, columns = 'Lift')
